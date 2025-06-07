@@ -1,4 +1,5 @@
 import enum
+import random
 
 DIRECTIONS = [
     ("east", "e"),
@@ -30,6 +31,20 @@ class Location(object):
     def add_exit(self, direction, destination):
         self.exits[direction] = destination
 
+    def show(self):
+        print(f"You are in {self.description}.")
+        print("Visible exists are:")
+        for exit in self.exits:
+            print(exit.name)
+        visible = []
+        for character in characters.values():
+            if character.location == self and not character.is_player:
+                visible.append(character)
+        if visible:
+            print("You see:")
+            for item in visible:
+                print(item.name)
+
 
 class Object(object):
     """This is anything that can exist at a location"""
@@ -41,7 +56,26 @@ class Item(Object):
 
 class Character(Object):
     """This is a character who can move around"""
-    pass
+    is_player = False
+    def __init__(self, name, location):
+        self.name = name
+        self.location = location
+
+    def go(self, direction):
+        if direction in self.location.exits:
+            came_from = self.location
+            self.location = self.location.exits[direction]
+            if self.is_player:
+                print(f"You go {direction.name}")
+            elif came_from == player.location:
+                print(f"{self.name} goes {direction.name}")
+            elif self.location == player.location:
+                print(f"{self.name} enters")
+        else:
+            print(f"{self.name.title()} cannot go {direction.name}")
+
+class Player(Character):
+    is_player = True
 
 locations = {
     "hobbit-hole": Location("hobbit-hole", "a comfortable tunnel like hall"),
@@ -53,6 +87,14 @@ connections = {
     "lonelands": {Direction.west: "hobbit-hole"},
 }
 
+characters = {
+    "you": Player("you", locations['hobbit-hole']),
+    "Gandalf": Character("Gandalf", locations['hobbit-hole']),
+    "Thorin": Character("Thorin", locations['hobbit-hole']),
+}
+
+player = characters['you']
+
 def connect_locations():
     for src_name, exits in connections.items():
         src = locations[src_name]
@@ -62,21 +104,17 @@ def connect_locations():
 
 connect_locations()
 
-def show_location(location):
-    print(f"You are in {location.description}.")
-    print("Visible exists are:")
-    for exit in location.exits:
-        print(exit.name)
-
 if __name__ == '__main__':
-    current_location = locations['hobbit-hole']
     while True:
-        show_location(current_location)
+        player.location.show()
         command = input("> ")
-        if Direction[command]:
+        if command in Direction.__dict__.keys():
             direction = Direction[command]
-            if direction in current_location.exits:
-                current_location = current_location.exits[direction]
-                print(f"You go {direction.name}")
-            else:
-                print(f"You cannot go {direction.name}")
+            player.go(direction)
+        elif command == 'wait':
+            print("You wait. Time passes...")
+        else:
+            print(f"I do not know how to {command}")
+        other_mover = random.choice(list(characters.values()))
+        if other_mover != player:
+            other_mover.go(random.choice(list(other_mover.location.exits.keys())))
