@@ -177,7 +177,7 @@ def connect_locations():
         for direction, target in exits.items():
             if isinstance(target, str):
                 destination = locations[target]
-                src.add_exit(direction, target)
+                src.add_exit(direction, destination)
             elif isinstance(target, tuple):
                 barrier_name, destination_name = target
                 barrier = barriers[barrier_name]
