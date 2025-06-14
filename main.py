@@ -43,10 +43,13 @@ characters_list = [
 characters.update({character.name: character for character in characters_list})
 
 items_list = [
-    Item("large-key", "the large key", locations['hobbit-hole']),
+    Item("large-key", "the large key", characters['hideous-troll']),
 ]
 
 items.update({item.name: item for item in items_list})
+for item in items_list:
+    if isinstance(item.location, Character):
+        item.location.items.append(item)
 
 player = classes.player = characters['you']
 
@@ -65,7 +68,8 @@ def connect_locations():
 
 connect_locations()
 
-if __name__ == '__main__':
+def play_game():
+    reset_time()
     while player.is_alive:
         player.location.show()
         for character in player.location.present_characters():
@@ -110,9 +114,16 @@ if __name__ == '__main__':
             break
         else:
             print(f"I do not know how to {command}")
+            continue
+        current_time = tick()
         for other_mover in characters.values():
+            if other_mover.time_sensitive:
+                other_mover.handle_tick(current_time)
             if other_mover != player:
                 possible_moves = list(other_mover.location.possible_moves(other_mover)) + ['wait']
                 move = random.choice(possible_moves)
                 if move != 'wait':
                     other_mover.go(move)
+
+if __name__ == '__main__':
+    play_game()

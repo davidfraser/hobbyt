@@ -47,11 +47,17 @@ class Location(object):
         visible = []
         for obj in list(characters.values()) + list(items.values()):
             if obj.location == self and not (isinstance(obj, Character) and obj.is_player):
-                visible.append(obj)
+                if obj.visible:
+                    visible.append(obj)
         if visible:
             print("You see:")
             for obj in visible:
-                print(f"  {obj}")
+                if isinstance(obj, Character) and obj.items:
+                    print(f"  {obj}. {obj.subject_name} is carrying")
+                    for item in obj.items:
+                        print(f"    {item}")
+                else:
+                    print(f"  {obj}")
 
     def possible_moves(self, character):
         for direction in self.exits:
@@ -61,8 +67,9 @@ class Location(object):
                 yield direction
 
     def present_characters(self):
+        """Yields all characters that are present and living"""
         for character in characters.values():
-            if character.location is self:
+            if character.location is self and character.is_alive:
                 yield character
 
 class Barrier(object):
@@ -135,6 +142,7 @@ class Object(object):
     def __init__(self, name, description):
         self.name = name
         self.description = description
+        self.visible = True
 
     def __str__(self):
         return self.description
@@ -148,6 +156,7 @@ class Item(Object):
 class Character(Object):
     """This is a character who can move around"""
     is_player = False
+    time_sensitive = False
     def __init__(self, name, description, location):
         Object.__init__(self, name, description)
         self.location = location
@@ -201,17 +210,25 @@ class Character(Object):
         if item not in self.items:
             self.items.append(item)
             item.location = self
+            self.report_action("take", item.description)
 
     def drop_item(self, item_or_name):
         item = item_or_name if isinstance(Item) else items[item_or_name]
         if item in self.items:
             self.items.remove(item)
             item.location = self.location
+            self.report_action("drop", item.description)
 
     def kill(self):
         self.is_alive = False
+        for item in self.items[:]:
+            self.items.remove(item)
+            item.location = self.location
 
     def on_sight(self, character):
+        pass
+
+    def handle_tick(self, current_time):
         pass
 
 class Player(Character):
@@ -222,6 +239,7 @@ class Player(Character):
         print(f"{self.subject_name} are dead.")
 
 class Troll(Character):
+    time_sensitive = True
     def __init__(self, name, description, location, saying, gluttonous=False):
         Character.__init__(self, name, description, location)
         self.saying = saying
@@ -238,11 +256,23 @@ class Troll(Character):
                     character.kill()
             else:
                 print(f'{self.subject_name} says "{self.saying}"')
-            self.seen_player = True
+            self.seen_player = get_tick()
 
     def go(self, direction):
         """These trolls are immovable and ignore such plans"""
         pass
+
+    def handle_tick(self, current_time):
+        if (self.seen_player is not False) and current_time >= (self.seen_player + 3):
+            if not global_state['daylight']:
+                print(f"Day dawns")
+                global_state['daylight'] = True
+                self.location.description = "a clearing with two stone trolls"
+            self.kill()
+
+    def kill(self):
+        Character.kill(self)
+        self.visible = False
 
 # global variables used by the rest of the program
 
@@ -251,3 +281,17 @@ characters = {}
 barriers = {}
 items = {}
 player = None
+global_state = {
+    'time': 0,
+    'daylight': False,
+}
+
+def reset_time():
+    global_state['time'] = 0
+
+def get_tick():
+    return global_state['time']
+
+def tick():
+    global_state['time'] += 1
+    return global_state['time']
