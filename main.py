@@ -161,7 +161,8 @@ U, D = (Direction.up, Direction.down)
 
 connections = {
     "hobbit-hole": {E: ("round-green-door", "lonelands")},
-    "lonelands": {W: ("round-green-door", "hobbit-hole")},
+    "lonelands": {W: ("round-green-door", "hobbit-hole"), NE: 'trolls-path'},
+    # 'trolls-path': {SW: ''}
 }
 
 characters = {
@@ -178,7 +179,7 @@ def connect_locations():
         for direction, target in exits.items():
             if isinstance(target, str):
                 destination = locations[target]
-                src.add_exit(direction, target)
+                src.add_exit(direction, destination)
             elif isinstance(target, tuple):
                 barrier_name, destination_name = target
                 barrier = barriers[barrier_name]
