@@ -89,7 +89,8 @@ U, D = (Direction.up, Direction.down)
 
 connections = {
     "hobbit-hole": {E: "lonelands"},
-    "lonelands": {W: "hobbit-hole"},
+    "lonelands": {W: "hobbit-hole", NE: 'trolls-path'},
+    # 'trolls-path': {SW: ''}
 }
 
 characters = {
