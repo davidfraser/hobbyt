@@ -145,16 +145,21 @@ class Player(Character):
 
 locations = {
     "hobbit-hole": Location("hobbit-hole", "a comfortable tunnel like hall"),
-    "lonelands": Location("lonelands", "a gloomy empty land with dreary hills ahead", "the Lonelands")
+    "lonelands": Location("lonelands", "a gloomy empty land with dreary hills ahead", "the Lonelands"),
+    "trolls-path": Location('trolls-path','A hidden path with trolls foot-prints'),
 }
 
 barriers = {
     "round-green-door": Door("round-green-door", "the round green door"),
 }
 
+E, W, N, S = (Direction.east, Direction.west, Direction.north, Direction.south)
+NE, NW, SE, SW = (Direction.northeast, Direction.northwest, Direction.southeast, Direction.southwest)
+U, D = (Direction.up, Direction.down)
+
 connections = {
-    "hobbit-hole": {Direction.east: ("round-green-door", "lonelands")},
-    "lonelands": {Direction.west: ("round-green-door", "hobbit-hole")},
+    "hobbit-hole": {E: ("round-green-door", "lonelands")},
+    "lonelands": {W: ("round-green-door", "hobbit-hole")},
 }
 
 characters = {
