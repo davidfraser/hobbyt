@@ -9,13 +9,15 @@ location_list = [
     Location("hobbit-hole", "a comfortable tunnel like hall"),
     Location("lonelands", "a gloomy empty land with dreary hills ahead", "the Lonelands"),
     Location('trolls-path','A hidden path with trolls foot-prints'),
-    Location("trolls-clearing",  "the trolls-clearing")
+    Location("trolls-clearing",  "the trolls-clearing"),
+    Location('trolls-cave', "the trolls cave"),
 ]
 
 locations.update({location.name: location for location in location_list})
 
 barriers.update({
     "round-green-door": Door("round-green-door", "the round green door"),
+    "heavy-rock-door": LockableDoor("heavy-rock-door", "the heavy rock door", "large-key"),
 })
 
 E, W, N, S = (Direction.east, Direction.west, Direction.north, Direction.south)
@@ -26,7 +28,8 @@ connections = {
     "hobbit-hole": {E: ("round-green-door", "lonelands")},
     "lonelands": {W: ("round-green-door", "hobbit-hole"), NE: 'trolls-path', E: 'trolls-path',
                   N: "trolls-clearing"},
-    'trolls-path': {S: 'trolls-clearing'},
+    'trolls-path': {S: 'trolls-clearing', N: ("heavy-rock-door", "trolls-cave")},
+    'trolls-cave': {S: ('heavy-rock-door', 'trolls-path')},
     "trolls-clearing": {N: "trolls-path", SW: "lonelands"},
 }
 
@@ -37,7 +40,8 @@ characters.update({
 })
 
 items_list = [
-    Item("large-key", "the large key", locations['hobbit-hole']),
+    Item("large-key", "the large key", locations['trolls-clearing']),
+ #  Item("  
 ]
 
 items.update({item.name: item for item in items_list})
