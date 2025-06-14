@@ -60,6 +60,11 @@ class Location(object):
             if barrier.can_pass():
                 yield direction
 
+    def present_characters(self):
+        for character in characters.values():
+            if character.location is self:
+                yield character
+
 class Barrier(object):
     def __init__(self, name, description):
         self.name = name
@@ -146,6 +151,7 @@ class Character(Object):
     def __init__(self, name, description, location):
         Object.__init__(self, name, description)
         self.location = location
+        self.is_alive = True
         self.items = []
 
     def go(self, direction):
@@ -166,13 +172,16 @@ class Character(Object):
                 self.report_action('enter')
         else:
             print(f"{self.subject_name} cannot go {direction.name}")
+        if not self.is_player:
+            for character in self.location.present_characters():
+               character.on_sight(self)
 
     def report_action(self, action, additional=''):
         print(f"{self.subject_name} {self.verb_suffix(action)}{' ' if additional else ''}{additional}.")
 
     @property
     def subject_name(self):
-        return self.name.title()
+        return self.description.title()
 
     def verb_suffix(self, verb):
         if self.name == "you":
@@ -199,8 +208,41 @@ class Character(Object):
             self.items.remove(item)
             item.location = self.location
 
+    def kill(self):
+        self.is_alive = False
+
+    def on_sight(self, character):
+        pass
+
 class Player(Character):
     is_player = True
+
+    def kill(self):
+        Character.kill(self)
+        print(f"{self.subject_name} are dead.")
+
+class Troll(Character):
+    def __init__(self, name, description, location, saying, gluttonous=False):
+        Character.__init__(self, name, description, location)
+        self.saying = saying
+        self.gluttonous = gluttonous
+        self.seen_player = False
+
+    def on_sight(self, character):
+        if character == player:
+            if self.seen_player:
+                if self.gluttonous:
+                    print(f"{self.subject_name} eats {character}.")
+                    print(f"His foul gluttony has killed {self.description}.")
+                    self.kill()
+                    character.kill()
+            else:
+                print(f'{self.subject_name} says "{self.saying}"')
+            self.seen_player = True
+
+    def go(self, direction):
+        """These trolls are immovable and ignore such plans"""
+        pass
 
 # global variables used by the rest of the program
 
