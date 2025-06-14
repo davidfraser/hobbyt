@@ -143,11 +143,13 @@ class Character(Object):
 class Player(Character):
     is_player = True
 
-locations = {
-    "hobbit-hole": Location("hobbit-hole", "a comfortable tunnel like hall"),
-    "lonelands": Location("lonelands", "a gloomy empty land with dreary hills ahead", "the Lonelands"),
-    "trolls-path": Location('trolls-path','A hidden path with trolls foot-prints'),
-}
+location_list = [
+    Location("hobbit-hole", "a comfortable tunnel like hall"),
+    Location("lonelands", "a gloomy empty land with dreary hills ahead", "the Lonelands"),
+    Location('trolls-path','A hidden path with trolls foot-prints'),
+]
+
+locations = {location.name: location for location in location_list}
 
 barriers = {
     "round-green-door": Door("round-green-door", "the round green door"),
