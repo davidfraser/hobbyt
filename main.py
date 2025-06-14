@@ -44,13 +44,13 @@ class Location(object):
             for direction in self.exits:
                 print(f"  {direction.name}")
         visible = []
-        for character in characters.values():
-            if character.location == self and not character.is_player:
-                visible.append(character)
+        for obj in list(characters.values()) + list(items.values()):
+            if obj.location == self and not (isinstance(obj, Character) and obj.is_player):
+                visible.append(obj)
         if visible:
             print("You see:")
-            for item in visible:
-                print(item.name)
+            for obj in visible:
+                print(f"  {obj}")
 
     def possible_moves(self, character):
         for direction in self.exits:
@@ -93,18 +93,26 @@ class Door(Barrier):
 
 class Object(object):
     """This is anything that can exist at a location"""
-    pass
+    def __init__(self, name, description):
+        self.name = name
+        self.description = description
+
+    def __str__(self):
+        return self.description
 
 class Item(Object):
     """This is a non-character object"""
-    pass
+    def __init__(self, name, description, location):
+        Object.__init__(self, name, description)
+        self.location = location
 
 class Character(Object):
     """This is a character who can move around"""
     is_player = False
     def __init__(self, name, location):
-        self.name = name
+        Object.__init__(self, name, name)
         self.location = location
+        self.items = []
 
     def go(self, direction):
         came_from = self.location
@@ -140,6 +148,23 @@ class Character(Object):
                 return verb + "es"
             return verb + "s"
 
+    def has_item(self, item_name):
+        for item in self.items:
+            if item_name == item.name:
+                return True
+        return False
+
+    def take_item(self, item):
+        if item not in self.items:
+            self.items.append(item)
+            item.location = self
+
+    def drop_item(self, item_or_name):
+        item = item_or_name if isinstance(Item) else items[item_or_name]
+        if item in self.items:
+            self.items.remove(item)
+            item.location = self.location
+
 class Player(Character):
     is_player = True
 
@@ -171,6 +196,12 @@ characters = {
     "Thorin": Character("Thorin", locations['hobbit-hole']),
 }
 
+items_list = [
+    Item("large-key", "the large key", locations['hobbit-hole']),
+]
+
+items = {item.name: item for item in items_list}
+
 player = characters['you']
 
 def connect_locations():
@@ -199,12 +230,32 @@ if __name__ == '__main__':
             player.go(direction)
         elif verb == 'wait':
             print("You wait. Time passes...")
-        elif verb in ('open', 'close'):
+        elif verb in ('open', 'close', 'lock', 'unlock'):
             subject = words[1:]
             if 'door' in subject:
                 if len(player.location.barriers) == 1:
                     direction, (barrier, destination) = list(player.location.barriers.items())[0]
                     barrier.take_action(player, verb)
+        elif verb in ('get', 'take'):
+            subject = words[1:]
+            subject = ' '.join(subject)
+            for item in items.values():
+                if item.description == subject:
+                    if item.location == player.location:
+                        player.take_item(item)
+        elif verb == 'drop':
+            subject = words[1:]
+            subject = ' '.join(subject)
+            for item in items.values():
+                if item.description == subject:
+                    if item.location == player.location:
+                        player.drop_item(item)
+        elif verb == 'inventory':
+            print(f"{player.subject_name} are carrying:")
+            if not player.items:
+                print("  nothing")
+            for item in player.items:
+                print(f"  {item.description}")
         else:
             print(f"I do not know how to {command}")
         for other_mover in characters.values():
