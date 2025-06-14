@@ -143,8 +143,8 @@ class Item(Object):
 class Character(Object):
     """This is a character who can move around"""
     is_player = False
-    def __init__(self, name, location):
-        Object.__init__(self, name, name)
+    def __init__(self, name, description, location):
+        Object.__init__(self, name, description)
         self.location = location
         self.items = []
 

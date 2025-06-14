@@ -30,11 +30,13 @@ connections = {
     "trolls-clearing": {N: "trolls-path", SW: "lonelands"},
 }
 
-characters.update({
-    "you": Player("you", locations['hobbit-hole']),
-    "Gandalf": Character("Gandalf", locations['hobbit-hole']),
-    "Thorin": Character("Thorin", locations['hobbit-hole']),
-})
+characters_list = [
+    Player("you", "you", locations['hobbit-hole']),
+    Character("gandalf", "Gandalf", locations['hobbit-hole']),
+    Character("thorin", "Thorin", locations['hobbit-hole']),
+]
+
+characters.update({character.name: character for character in characters_list})
 
 items_list = [
     Item("large-key", "the large key", locations['hobbit-hole']),
