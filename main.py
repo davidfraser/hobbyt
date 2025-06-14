@@ -33,18 +33,27 @@ connections = {
     "trolls-clearing": {N: "trolls-path", SW: "lonelands"},
 }
 
-characters.update({
-    "you": Player("you", locations['hobbit-hole']),
-    "Gandalf": Character("Gandalf", locations['hobbit-hole']),
-    "Thorin": Character("Thorin", locations['hobbit-hole']),
-})
+characters_list = [
+    Player("you", "you", locations['hobbit-hole']),
+    Character("gandalf", "Gandalf", locations['hobbit-hole']),
+    Character("thorin", "Thorin", locations['hobbit-hole']),
+    Troll("hideous-troll", "the hideous troll", locations['trolls-clearing'],
+          "Blimey, looks at this. Can yer cook em?", True),
+    Troll("vicious-troll", "the vicious troll", locations['trolls-clearing'],
+          "Yer can try, but he wouldn't make above a mouthful.", False),
+]
+
+characters.update({character.name: character for character in characters_list})
 
 items_list = [
-    Item("large-key", "the large key", locations['trolls-clearing']),
- #  Item("  
+    Item("large-key", "the large key", characters['hideous-troll']),
+#  Item("  
 ]
 
 items.update({item.name: item for item in items_list})
+for item in items_list:
+    if isinstance(item.location, Character):
+        item.location.items.append(item)
 
 player = classes.player = characters['you']
 
@@ -63,16 +72,21 @@ def connect_locations():
 
 connect_locations()
 
-if __name__ == '__main__':
-    while True:
+def play_game():
+    reset_time()
+    while player.is_alive:
         player.location.show()
+        for character in player.location.present_characters():
+            character.on_sight(player)
+        if not player.is_alive:
+            break
         command = input("> ").lower().strip()
         words = command.split() or ['']
         verb = words[0]
         if verb in Direction.__dict__.keys():
             direction = Direction[command]
             player.go(direction)
-        elif verb == 'wait':
+        elif verb == 'wait' or not verb:
             print("You wait. Time passes...")
         elif verb in ('open', 'close', 'lock', 'unlock'):
             subject = words[1:]
@@ -100,11 +114,20 @@ if __name__ == '__main__':
                 print("  nothing")
             for item in player.items:
                 print(f"  {item.description}")
+        elif verb == 'quit':
+            break
         else:
             print(f"I do not know how to {command}")
+            continue
+        current_time = tick()
         for other_mover in characters.values():
+            if other_mover.time_sensitive:
+                other_mover.handle_tick(current_time)
             if other_mover != player:
                 possible_moves = list(other_mover.location.possible_moves(other_mover)) + ['wait']
                 move = random.choice(possible_moves)
                 if move != 'wait':
                     other_mover.go(move)
+
+if __name__ == '__main__':
+    play_game()
