@@ -147,6 +147,7 @@ location_list = [
     Location("hobbit-hole", "a comfortable tunnel like hall"),
     Location("lonelands", "a gloomy empty land with dreary hills ahead", "the Lonelands"),
     Location('trolls-path','A hidden path with trolls foot-prints'),
+    Location("trolls-clearing",  "the trolls-clearing")
 ]
 
 locations = {location.name: location for location in location_list}
@@ -161,8 +162,10 @@ U, D = (Direction.up, Direction.down)
 
 connections = {
     "hobbit-hole": {E: ("round-green-door", "lonelands")},
-    "lonelands": {W: ("round-green-door", "hobbit-hole"), NE: 'trolls-path'},
-    # 'trolls-path': {SW: ''}
+    "lonelands": {W: ("round-green-door", "hobbit-hole"), NE: 'trolls-path', E: 'trolls-path',
+                  N: "trolls-clearing"},
+    'trolls-path': {S: 'trolls-clearing'},
+    "trolls-clearing": {N: "trolls-path", SW: "lonelands"},
 }
 
 characters = {
