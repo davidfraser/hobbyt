@@ -83,9 +83,13 @@ locations = {
     "trolls-path": Location('trolls-path','A hidden path with trolls foot-prints'),
 }
 
+E, W, N, S = (Direction.east, Direction.west, Direction.north, Direction.south)
+NE, NW, SE, SW = (Direction.northeast, Direction.northwest, Direction.southeast, Direction.southwest)
+U, D = (Direction.up, Direction.down)
+
 connections = {
-    "hobbit-hole": {Direction.east: "lonelands"},
-    "lonelands": {Direction.west: "hobbit-hole"},
+    "hobbit-hole": {E: "lonelands"},
+    "lonelands": {W: "hobbit-hole"},
 }
 
 characters = {
