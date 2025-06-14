@@ -79,7 +79,8 @@ class Player(Character):
 
 locations = {
     "hobbit-hole": Location("hobbit-hole", "a comfortable tunnel like hall"),
-    "lonelands": Location("lonelands", "a gloomy empty land with dreary hills ahead", "the Lonelands")
+    "lonelands": Location("lonelands", "a gloomy empty land with dreary hills ahead", "the Lonelands"),
+    "trolls-path": Location('trolls-path','A hidden path with trolls foot-prints'),
 }
 
 connections = {
