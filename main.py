@@ -65,14 +65,27 @@ class Character(Object):
         if direction in self.location.exits:
             came_from = self.location
             self.location = self.location.exits[direction]
-            if self.is_player:
-                print(f"You go {direction.name}")
-            elif came_from == player.location:
-                print(f"{self.name} goes {direction.name}")
+            if came_from == player.location:
+                self.report_action('go', direction.name)
             elif self.location == player.location:
-                print(f"{self.name} enters")
+                self.report_action('enter')
         else:
-            print(f"{self.name.title()} cannot go {direction.name}")
+            print(f"{self.subject_name} cannot go {direction.name}")
+
+    def report_action(self, action, additional=''):
+        print(f"{self.subject_name} {self.verb_suffix(action)}{' ' if additional else ''}{additional}.")
+
+    @property
+    def subject_name(self):
+        return self.name.title()
+
+    def verb_suffix(self, verb):
+        if self.name == "you":
+            return verb
+        else:
+            if verb[-1:] in "aeiou":
+                return verb + "es"
+            return verb + "s"
 
 class Player(Character):
     is_player = True
