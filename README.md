@@ -8,3 +8,8 @@ and later the Commodore 64, BBC Micro and other home computers.
 
 This is an attempt at reimplementing the game in reasonably modern Python for today's computers.
 Hence the name Hobbyt, a play on Hobbit + Python.
+
+License
+=======
+
+This software is released under the [MIT license](./LICENSE.txt).
