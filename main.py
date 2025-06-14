@@ -75,21 +75,54 @@ class Door(Barrier):
     def can_pass(self):
         return self.is_open
 
-    def take_action(self, character, action):
+    def take_action(self, character, action, report_unknown_actions=True):
+        """The given character takes the given action on this door. Returns whether an action was understood"""
         if action == 'open':
             if self.is_open:
                 print(f"{self.description} is open.")
             else:
                 character.report_action(action, self.description)
                 self.is_open = True
+            return True
         elif action == 'close':
             if self.is_open:
                 character.report_action(action, self.description)
                 self.is_open = False
             else:
                 print(f"{self.description} is closed.")
-        else:
+            return True
+        elif report_unknown_actions:
             print(f"{character.subject_name} cannot {action} {self.description}")
+        return False
+
+class LockableDoor(Door):
+    def __init__(self, name, description, key_name, starts_open=False, starts_locked=True):
+        Door.__init__(self, name, description, starts_open)
+        self.key_name = key_name
+        self.is_locked = starts_locked
+
+    def take_action(self, character, action, report_unknown_action=True):
+        """The given character takes the given action on this door. Returns whether an action was understood"""
+        if not self.is_locked:
+            if Door.take_action(self, character, action, report_unknown_actions=False):
+                return True
+        if action == 'unlock':
+            if self.is_locked:
+                if character.has_item(self.key_name):
+                    key = items[self.key_name]
+                    character.report_action(action, f"{self.description} with {key}")
+                    self.is_locked = False
+                    return True
+        elif action == 'lock':
+            if not self.is_locked:
+                if character.has_item(self.key_name):
+                    key = items[self.key_name]
+                    character.report_action(action, f"{self.description} with {key}")
+                    self.is_locked = True
+                    return True
+        if report_unknown_action:
+           print(f"{character.subject_name} cannot {action} {self.description}")
+        return False
 
 class Object(object):
     """This is anything that can exist at a location"""
