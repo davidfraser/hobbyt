@@ -27,15 +27,22 @@ class Location(object):
         self.description = description
         self.short_description = short_description or description
         self.exits = {}
+        self.barriers = {}
 
     def add_exit(self, direction, destination):
         self.exits[direction] = destination
 
+    def add_barrier(self, direction, barrier, destination):
+        self.barriers[direction] = (barrier, destination)
+
     def show(self):
         print(f"You are in {self.description}.")
-        print("Visible exists are:")
-        for exit in self.exits:
-            print(exit.name)
+        for direction, (barrier, destination) in self.barriers.items():
+            print(f"To the {direction.name} there is the {barrier.description}.")
+        if self.exits:
+            print("Visible exits are:")
+            for direction in self.exits:
+                print(f"  {direction.name}")
         visible = []
         for character in characters.values():
             if character.location == self and not character.is_player:
@@ -45,6 +52,44 @@ class Location(object):
             for item in visible:
                 print(item.name)
 
+    def possible_moves(self, character):
+        for direction in self.exits:
+            yield direction
+        for direction, (barrier, destination) in self.barriers.items():
+            if barrier.can_pass():
+                yield direction
+
+class Barrier(object):
+    def __init__(self, name, description):
+        self.name = name
+        self.description = description
+
+    def can_pass(self):
+        return False
+
+class Door(Barrier):
+    def __init__(self, name, description, starts_open=False):
+        Barrier.__init__(self, name, description)
+        self.is_open = starts_open
+
+    def can_pass(self):
+        return self.is_open
+
+    def take_action(self, character, action):
+        if action == 'open':
+            if self.is_open:
+                print(f"{self.description} is open.")
+            else:
+                character.report_action(action, self.description)
+                self.is_open = True
+        elif action == 'close':
+            if self.is_open:
+                character.report_action(action, self.description)
+                self.is_open = False
+            else:
+                print(f"{self.description} is closed.")
+        else:
+            print(f"{character.subject_name} cannot {action} {self.description}")
 
 class Object(object):
     """This is anything that can exist at a location"""
@@ -62,10 +107,18 @@ class Character(Object):
         self.location = location
 
     def go(self, direction):
+        came_from = self.location
+        move = None
         if direction in self.location.exits:
-            came_from = self.location
+            move = direction
             self.location = self.location.exits[direction]
-            if came_from == player.location:
+        elif direction in self.location.barriers:
+            barrier, destination = self.location.barriers[direction]
+            if barrier.can_pass():
+                move = direction
+                self.location = destination
+        if move:
+            if self == player or came_from == player.location:
                 self.report_action('go', direction.name)
             elif self.location == player.location:
                 self.report_action('enter')
@@ -95,9 +148,13 @@ locations = {
     "lonelands": Location("lonelands", "a gloomy empty land with dreary hills ahead", "the Lonelands")
 }
 
+barriers = {
+    "round-green-door": Door("round-green-door", "the round green door"),
+}
+
 connections = {
-    "hobbit-hole": {Direction.east: "lonelands"},
-    "lonelands": {Direction.west: "hobbit-hole"},
+    "hobbit-hole": {Direction.east: ("round-green-door", "lonelands")},
+    "lonelands": {Direction.west: ("round-green-door", "hobbit-hole")},
 }
 
 characters = {
@@ -111,23 +168,40 @@ player = characters['you']
 def connect_locations():
     for src_name, exits in connections.items():
         src = locations[src_name]
-        for direction, destination_name in exits.items():
-            destination = locations[destination_name]
-            src.add_exit(direction, destination)
+        for direction, target in exits.items():
+            if isinstance(target, str):
+                destination = locations[target]
+                src.add_exit(direction, target)
+            elif isinstance(target, tuple):
+                barrier_name, destination_name = target
+                barrier = barriers[barrier_name]
+                destination = locations[destination_name]
+                src.add_barrier(direction, barrier, destination)
 
 connect_locations()
 
 if __name__ == '__main__':
     while True:
         player.location.show()
-        command = input("> ")
-        if command in Direction.__dict__.keys():
+        command = input("> ").lower().strip()
+        words = command.split()
+        verb = words[0]
+        if verb in Direction.__dict__.keys():
             direction = Direction[command]
             player.go(direction)
-        elif command == 'wait':
+        elif verb == 'wait':
             print("You wait. Time passes...")
+        elif verb in ('open', 'close'):
+            subject = words[1:]
+            if 'door' in subject:
+                if len(player.location.barriers) == 1:
+                    direction, (barrier, destination) = list(player.location.barriers.items())[0]
+                    barrier.take_action(player, verb)
         else:
             print(f"I do not know how to {command}")
-        other_mover = random.choice(list(characters.values()))
-        if other_mover != player:
-            other_mover.go(random.choice(list(other_mover.location.exits.keys())))
+        for other_mover in characters.values():
+            if other_mover != player:
+                possible_moves = list(other_mover.location.possible_moves(other_mover)) + ['wait']
+                move = random.choice(possible_moves)
+                if move != 'wait':
+                    other_mover.go(move)
