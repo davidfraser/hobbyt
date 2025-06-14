@@ -256,7 +256,7 @@ if __name__ == '__main__':
     while True:
         player.location.show()
         command = input("> ").lower().strip()
-        words = command.split()
+        words = command.split() or ['']
         verb = words[0]
         if verb in Direction.__dict__.keys():
             direction = Direction[command]
